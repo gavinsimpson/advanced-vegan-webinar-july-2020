@@ -1287,7 +1287,7 @@ P&eacute;ter S&oacute;lymos
 
 ### Slides
 
-* HTML Slide deck [bit.ly/radvvegan-webinar](https://bit.ly/radvvegan-webinar) &copy; Simpson (2020) [![Creative Commons Licence](https://i.creativecommons.org/l/by/4.0/88x31.png)](http://creativecommons.org/licenses/by/4.0/)
+* HTML Slide deck [bit.ly/adv-vegan](https://bit.ly/adv-vegan) &copy; Simpson (2020) [![Creative Commons Licence](https://i.creativecommons.org/l/by/4.0/88x31.png)](http://creativecommons.org/licenses/by/4.0/)
 * RMarkdown [Source](https://github.com/gavinsimpson/advanced-vegan-webinar-july-2020)
 
 ---

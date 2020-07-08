@@ -8,7 +8,7 @@ Delve deeper into using R and vegan to analyse complex multivariate community ec
 
 ## Links
 
-* Slidedeck: [bit.ly/rvegan-webinar](https://bit.ly/rvegan-webinar)
+* Slidedeck: [bit.ly/adv-vegan](https://bit.ly/adv-vegan)
 * Q & A: [bit.ly/adv-vegan-qa](https://bit.ly/adv-vegan-qa)
 * U of R Student Emergency Fund [giving.uregina.ca/student-emergency-fund](https://giving.uregina.ca/student-emergency-fund)
 

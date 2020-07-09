@@ -159,18 +159,35 @@ eigenvals(cca1)
 
 ---
 
-# Your turn
+# Example
 
 - Fit a CCA model to the lichen pasture data. The model should include, N, P, and K only.
 - Save the model in object `mycca1`
 - How much variance is explained by this model?
 - Extract the eigenvalues, how many constrained axes are there?
 
-```{r your-turn-fit-cca}
+---
+
+```{r your-turn-fit-cca-1}
 library("vegan")
 data(varechem, varespec)
-## ...your code here...
 ```
+
+--
+
+```{r your-turn-fit-cca-2}
+mycca1 <- cca(varespec ~ N + P + K, data = varechem)
+mycca1
+```
+
+---
+
+```{r your-turn-fit-cca-3}
+ev <- eigenvals(mycca1, model = "constrained")
+head(ev)
+length(ev)
+```
+
 
 ---
 
@@ -206,6 +223,10 @@ Can't display all of these and maintain relationships between the scores
 
 *Solution* scale one set of scores relative to the other via the `scaling` argument
 
+---
+
+# Scalings&hellip;
+
 * `scaling = 1` &mdash; Focus on sites, scale site scores by $\lambda_i$
 * `scaling = 2` &mdash; Focus on species, scale species scores by $\lambda_i$
 * `scaling = 3` &mdash; Symmetric scaling, scale both scores by $\sqrt{\lambda_i}$
@@ -237,9 +258,17 @@ Two modifiers select negative scores depending on whether the model is CCA or RD
 
 ---
 
-# Your turn
+# Example
 
-- Using the CCA model you fitted, extract the site scores for axes 2 and 3 with Hill's scaling
+- Using the CCA model you fitted, extract the site scores for axes 2 and 3 with Hill's scaling, focusing on the sites
+
+--
+
+```{r your-turn-cca-4}
+scrs <- scores(mycca1, display = "sites", choices = c(2,3),
+               scaling = "sites", hill = TRUE)
+head(scrs)
+```
 
 ---
 
@@ -249,39 +278,52 @@ Two modifiers select negative scores depending on whether the model is CCA or RD
 
 Argument `Z` is used for a data frame of variables to partial out
 
-Or with the formula interface use the `Condition()` function
-
-```{r partial-ordination}
+```{r partial-ordination-1}
 pcca <- cca(X = varespec,
             Y = varechem[, "Ca", drop = FALSE],
             Z = varechem[, "pH", drop = FALSE])
+```
+Or with the formula interface use the `Condition()` function
+
+```{r partial-ordination-2}
 pcca <- cca(varespec ~ Ca + Condition(pH), data = varechem) ## easier!
+```
+
+---
+
+# Partial constrained ordinations
+
+```{r partial-ordination-3}
+pcca <- cca(varespec ~ Ca + Condition(pH), data = varechem) ## easier!
+pcca
 ```
 
 ---
 
 # Triplots
 
-Triplots will generally produce a mess; we can really only display a couple of bits approximately anyway Trying to cram three things in is a recipe for a mess&hellip; but we can do it
+.row[
+.col-6[
 
-```{r triplot-1, fig.height = 5, crop.plot = TRUE, out.width = "0.5\\linewidth"}
+Triplots will generally produce a mess; we can really only display a couple of bits approximately anyway Trying to cram three things in is a recipe for a mess&hellip; but we can do it
+]
+.col-6[
+```{r triplot-1, fig.height = 6, fig.width = 6}
 plot(cca1)
 ```
+]
+]
 
 ---
+class: inverse middle center subsection
 
-# Your turn
-
-- Using `mycca`, draw a triplot of axes 2 and 3 with sites scaling
-- Use the help file `?plot.cca` to help you work out how to do this
+# Model building
 
 ---
 
 # Building constrained ordination models
 
-If we don't want to think it's easy to fit a poor model with many constraints
-
-That's what I did with `cca1` and `rda1`
+If we don't want to think it's easy to fit a poor model with many constraints &mdash; That's what I did with `cca1` and `rda1`
 
 Remember, CCA and RDA are *just regression methods* &mdash; everything you know about regression applies here
 
@@ -304,22 +346,22 @@ vare.cca
 
 # Building constrained ordination models
 
-For CCA we have little choice but to do
+For CCA, RDA etc we have little choice but to do
 
  1. Fit well-chosen set of candidate models & compare, or
  2. Fit a *full* model of well-chosen variables & then do stepwise selection
 
-But automatic approaches to model building should be used cautiously!
+Automatic approaches to model building should be used cautiously!
 
-The standard `step()` function can be used as **vegan** provides two helper methods, `deviance()` and `extractAIC()`, used by `step()`
+The standard `step()` function can be used as *vegan* provides two helper methods, `deviance()` and `extractAIC()`, used by `step()`
 
-Vegan also provides methods for class `"cca"` for `add1()` and `drop1()`
+*vegan* also provides methods for class `"cca"` for `add1()` and `drop1()`
 
 ---
 
 # Variance inflation factors
 
-*Linear* dependencies between constraints can be investigated via the *variance inflation factor* or VIF
+*Linear* dependencies between constraints can be investigated with VIF
 
 VIF is a measure of how much the variance of $\hat{\beta}_j$ is inflated by presence of other covariates
 
@@ -330,14 +372,18 @@ Lots of rules of thumb
 
 Computed via `vif.cca()`
 
+```{r vif-cca1}
+vif.cca(cca1)
+```
+
 ---
 
 # Stepwise selection in CCA
 
-`step()` uses AIC which is a fudge for RDA/CCA. Alternatively use function `ordistep()`
+`step()` uses AIC which is a fudge for RDA/CCA &mdash; use `ordistep()`
 
- 1. Define an upper and lower model scope, say the full model and the null model
- 2. To step from the lower scope or null model we use
+1. Define an upper and lower model scope, say the full model and the null model
+2. To step from the lower scope or null model we use
 
 ```{r stepwise-1}
 upr <- cca(varespec ~ ., data = varechem)
@@ -369,6 +415,10 @@ The `$anova` component contains a summary of the steps involved in automatic mod
 ```{r stepwise-anova}
 mods$anova
 ```
+
+1. `Al` added first, then
+2. `P`, followed by
+3. `K`, then stopped
 
 ---
 
@@ -411,7 +461,10 @@ $$R^2_{adj} = 1 - \frac{n - 1}{n - m - 1}(1 - R^2)$$
 * $n$ is number of samples $m$ is number of constraints (model degrees of freedom)
 * Can be used up to $\sim M > n/2$ before becomes too conservative
 * Can be negative
-* Compute using `RsquareAdj()`
+
+```{r rsq-cca1}
+RsquareAdj(cca1)
+```
 
 ---
 
@@ -436,6 +489,14 @@ Blanchet *et al* (2008) proposed a two-step solution for models where $R^2_{adj}
 Available in `ordiR2step()`
 
 ---
+
+# Stepwise selection via adjusted $R^2$
+
+```{r stopping-rules}
+ordiR2step(lwr, upr, trace = FALSE)
+```
+
+---
 class: inverse middle center subsection
 
 # Permutation tests
@@ -458,8 +519,7 @@ What *is* shuffled and *how* is of **paramount** importance for the test to be v
 * With conditioning variables, two options are available, both of which *permute residuals* from model fits
     * The *full model* uses residuals from model $Y = X + Z + \varepsilon$
     * The *reduced model* uses residuals from model $Y = Z + \varepsilon$
-* In **vegan** which is used can be set via argument `model` with `"direct"`, ~~`"full"`~~, and `"reduced"` respectively
-* In current **vegan** option `method = "full"` is disabled
+* In **vegan** which is used can be set via argument `model` with `"direct"`, `"full"`, and `"reduced"` respectively
 
 ---
 
@@ -472,6 +532,38 @@ A test statistic is required, computed for observed model & each permuted model
 $$F=\frac{\chi^2_{model} / df_{model}}{\chi^2_{resid} / df_{resid}}$$
 
 Evaluate whether $F$ is unusually large relative to the null (permutation) distribution of $F$
+
+---
+
+# Permutation tests in vegan
+
+.row[
+.col-6[
+```{r permustats-1, results = "hide"}
+pstat <- permustats(anova(cca1))
+summary(pstat)
+```
+.small[
+```{r permustats-1, echo = FALSE}
+```
+]
+]
+.col-6[
+```{r permustats-2, fig.width = 6, fig.height = 6}
+densityplot(pstat)
+```
+]
+]
+
+???
+
+The summary method of permustats estimates the standardized effect sizes (SES) as the difference
+of observed statistic and mean of permutations divided by the standard deviation of permutations
+(also known as z-values). It also prints the the mean, median, and limits which contain interval
+percent of permuted values. With the default (interval = 0.95), for two-sided test these are (2.5%,
+97.5%) and for one-sided tests either 5% or 95% quantile and the p-value depending on the test
+direction. The mean, quantiles and z values are evaluated from permuted values without observed
+statistic, but the p-value is evaluated with the observed statistic. 
 
 ---
 
@@ -608,9 +700,18 @@ anova(m1)
 
 # Spring meadow vegetation
 
-```{r meadows-cca-full-triplot, fig.height = 5, crop.plot = TRUE, out.width = "0.5\\linewidth"}
+.row[
+.col-6[
+```{r meadows-cca-full-triplot, fig.show = "hide"}
 plot(m1)
 ```
+]
+.col-6[
+
+```{r meadows-cca-full-triplot, fig.height = 6, fig.width = 6, echo = FALSE}
+```
+]
+]
 
 ---
 
@@ -619,17 +720,25 @@ plot(m1)
 ```{r meadows-cca-stepwise}
 set.seed(67)
 lwr <- cca(spp ~ 1, data = env)
-m2 <- ordistep(lwr, scope = formula(m1), trace = FALSE)
-m2
+( m2 <- ordistep(lwr, scope = formula(m1), trace = FALSE) )
 ```
 
 ---
 
 # Spring meadow vegetation
 
-```{r meadows-cca-reduced-triplot, fig.height = 5, crop.plot = TRUE, out.width = "0.5\\linewidth"}
+.row[
+.col-6[
+```{r meadows-cca-reduced-triplot, fig.show = "hide"}
 plot(m2)
 ```
+]
+.col-6[
+
+```{r meadows-cca-reduced-triplot, fig.height = 6, fig.width = 6, echo = FALSE}
+```
+]
+]
 
 ---
 
@@ -645,20 +754,40 @@ m2$anova
 
 Alternative is RDA with a transformation
 
+.row[
+.col-6[
 ```{r meadows-rda}
 spph <- decostand(spp, method = "hellinger")
 m3 <- rda(spph ~ ., data = env)
 lwr <- rda(spph ~ 1, data = env)
-m4 <- ordistep(lwr, scope = formula(m3), trace = FALSE)
+m4 <- ordistep(lwr, scope = formula(m3),
+               trace = FALSE)
 ```
-
+]
+.col-6[
+.small[
+```{r meadows-rda-print}
+m4
+```
+]
+]
+]
 ---
 
 # Spring meadow vegetation
 
-```{r meadows-rda-reduced-triplot, fig.height = 5, crop.plot = TRUE, out.width = "0.5\\linewidth"}
+.row[
+.col-6[
+```{r meadows-rda-reduced-triplot, fig.show = "hide"}
 plot(m4)
 ```
+]
+.col-6[
+
+```{r meadows-rda-reduced-triplot, fig.height = 6, fig.width = 6, echo = FALSE}
+```
+]
+]
 
 ---
 
@@ -698,21 +827,21 @@ Trick is to shuffle the data whilst preserving that dependence
 
 # Restricted permutations
 
-Canoco has had restricted permutations for a *long* time. **vegan** has only recently caught up & we're not (quite) there yet
+Canoco has had restricted permutations for a *long* time. *vegan* has only recently caught up & we're not (quite) there yet
 
-**vegan** used to only know how to completely randomise data or completely randomise within blocks (via `strata` in **vegan**)
+*vegan* used to only know how to completely randomise data or completely randomise within blocks (via `strata` in *vegan*)
 
-The **permute** package grew out of initial code in the **vegan** repository to generate the sorts of restricted permutations available in Canoco
+The **permute** package grew out of initial code in the *vegan* repository to generate the sorts of restricted permutations available in Canoco
 
-We have now fully integrated **permute** into **vegan**&hellip;
+We have now fully integrated **permute** into *vegan*&hellip;
 
-**vegan** depends on **permute** so it will already be installed & loaded when using **vegan**
+*vegan* depends on *permute* so it will already be installed & loaded when using *vegan*
 
 ---
 
 # Restricted permutations with permute
 
-**permute** follows Canoco closely &mdash; at the chiding of Cajo ter Braak when it didn't do what he wanted!
+*permute* follows *Canoco* closely &mdash; at the (friendly!) chiding of Cajo ter Braak when it didn't do what he wanted!
 
 Samples can be thought of as belonging to three levels of a hierarchy
 
@@ -736,7 +865,7 @@ Plots or samples within plots, or both can be permuted following one of four sim
 4. Permutation of plots (groups of samples)
 5. Fixed (no permutation)
 
-Multiple plots per block, multiple samples per plot; plots could be arranged in a spatial grid and samples within each of the plots form a time series
+Multiple plots per block, multiple samples per plot; plots could be arranged in a spatial grid & samples within plots form time series
 
 ---
 
@@ -819,7 +948,7 @@ Split-plot designs are hierarchical with two levels of units
 1. **whole-plots** , which contain
 2. **split-plots** (the samples)
 
-Can permute one or both of these but whole-plots must be of equal size
+Permute one or both, but whole-plots must be of equal size
 
 Essentially allows more than one error stratum to be analyzed
 
@@ -831,7 +960,7 @@ Test effect of constraints that vary *within* whole-plots by permuting the split
 
 # Whole-plots & split-plots II
 
-Whole-plots or split-plots can be time series, linear transects or rectangular grids in which case the appropriate restricted permutation is used
+Whole-plots or split-plots, or both, can be time series, linear transects or rectangular grids in which case the appropriate restricted permutation is used
 
 If the split-plots are parallel time series & `time` is an autocorrelated error component affecting all series then the same cyclic shift can be applied to each time series (within each whole-plot) (`constant = TRUE`)
 
@@ -861,9 +990,9 @@ Using `mirror = TRUE` then can double (time series, linear transects) or quadrup
 
 ---
 
-# Sets of permutations
+# Sets of permutations &mdash; no free lunch
 
-Using restricted permutations can severely reduce the size of the set of allowed permutations
+Restricted severely reduce the size of the set of permutations
 
 As the minimum *p* value obtainable is $1 / np$ where $np$ is number of allowed permutations (including the observed) this can impact the ability to detect signal/pattern
 
@@ -873,7 +1002,13 @@ If we don't want mirroring
 * in a time series of 100 samples the minimum *p* is 1/100 (0.01)
 * in a data set with 10 time series each of 20 observations (200 total), if we assume an autocorrelated error component over all series (`constant = TRUE`) then there are only 20 permutations of the data and minimum *p* is 0.05
 
+---
+
+# Sets of permutations &mdash; no free lunch
+
 When the set of permutations is small it is better to switch to an exact test & evaluate all permutations in the set rather than randomly sample from the set
+
+Use `complete = TRUE` in the call to `how()` &mdash; perhaps also increase `maxperm`
 
 ---
 
@@ -1060,7 +1195,7 @@ names(design) <- c("Watershed", "Stream", "Reach", "Run",
 
 ---
 
-# Hierarchical analysis of crayfish &mdash; Unconstrained
+# Crayfish &mdash; Unconstrained
 
 A number of samples have 0 crayfish, which excludes unimodal methods
 
@@ -1071,9 +1206,9 @@ summary(eigenvals(m.pca))
 
 ---
 
-# Hierarchical analysis of crayfish &mdash; Unconstrained
+# Crayfish &mdash; Unconstrained
 
-```{r crayfish-pca-plot, fig.width = 16, fig.height = 7.5, fig.show = "hold", crop.plot = TRUE}
+```{r crayfish-pca-plot, fig.show = "hide", collapse = TRUE}
 layout(matrix(1:2, ncol = 2))
 biplot(m.pca, type = c("text", "points"), scaling = "species")
 set.seed(23)
@@ -1081,10 +1216,14 @@ ev.pca <- envfit(m.pca ~ Watershed, data = design, scaling = "species")
 plot(ev.pca, labels = levels(design$Watershed), add = FALSE)
 layout(1)
 ```
+.center[
+```{r crayfish-pca-plot, fig.show = "hold", out.width = "75%", echo = FALSE, fig.height = 5}
+```
+]
 
 ---
 
-# Hierarchical analysis of crayfish &mdash; Watershed scale
+# Crayfish &mdash; Watershed scale
 
 ```{r crayfish-watershed}
 m.ws <- rda(crayfish ~ Watershed, data = design)
@@ -1093,11 +1232,17 @@ m.ws
 
 ---
 
-# Hierarchical analysis of crayfish &mdash; Watershed scale
+# Crayfish &mdash; Watershed scale
 
 ```{r crayfish-watershed-2}
 summary(eigenvals(m.ws, constrained = TRUE))
+```
 
+---
+
+# Crayfish &mdash; Watershed scale
+
+```{r crayfish-watershed-3}
 set.seed(1)
 ctrl <- how(nperm = 499, within = Within(type = "none"),
             plots = with(design, Plots(strata = Stream, type = "free")))
@@ -1106,7 +1251,7 @@ ctrl <- how(nperm = 499, within = Within(type = "none"),
 
 ---
 
-# Hierarchical analysis of crayfish &mdash; Stream scale
+# Crayfish &mdash; Stream scale
 
 ```{r crayfish-stream}
 m.str <- rda(crayfish ~ Stream + Condition(Watershed), data = design)
@@ -1115,10 +1260,17 @@ m.str
 
 ---
 
-# Hierarchical analysis of crayfish &mdash; Stream scale
+# Crayfish &mdash; Stream scale
 
 ```{r crayfish-stream-2}
 summary(eigenvals(m.str, constrained = TRUE))
+```
+
+---
+
+# Crayfish &mdash; Stream scale
+
+```{r crayfish-stream-3}
 set.seed(1)
 ctrl <- how(nperm = 499, within = Within(type = "none"),
             plots = with(design, Plots(strata = Reach, type = "free")),
@@ -1128,7 +1280,7 @@ ctrl <- how(nperm = 499, within = Within(type = "none"),
 
 ---
 
-# Hierarchical analysis of crayfish &mdash; Reach scale
+# Crayfish &mdash; Reach scale
 
 ```{r crayfish-reach}
 (m.re <- rda(crayfish ~ Reach + Condition(Stream), data = design))
@@ -1136,7 +1288,7 @@ ctrl <- how(nperm = 499, within = Within(type = "none"),
 
 ---
 
-# Hierarchical analysis of crayfish &mdash; Reach scale
+# Crayfish &mdash; Reach scale
 
 ```{r crayfish-reach-2}
 set.seed(1)
@@ -1148,7 +1300,7 @@ ctrl <- how(nperm = 499, within = Within(type = "none"),
 
 ---
 
-# Hierarchical analysis of crayfish &mdash; Run scale
+# Crayfish &mdash; Run scale
 
 ```{r crayfish-run}
 (m.run <- rda(crayfish ~ Run + Condition(Reach), data = design))
@@ -1156,7 +1308,7 @@ ctrl <- how(nperm = 499, within = Within(type = "none"),
 
 ---
 
-# Hierarchical analysis of crayfish &mdash; Run scale
+# Crayfish &mdash; Run scale
 
 ```{r crayfish-run-2}
 set.seed(1)
@@ -1184,35 +1336,24 @@ class: inverse middle center big-subsection
 
 ---
 
-# Diagnostics for constrained ordinations | goodness of fit
+# Diagnostics | goodness of fit
 
-`goodness()` computes two goodness of fit statistics for species or sites
+`goodness()` computes a goodness of fit statistic for species or sites, controlled by argument `display`
 
-Which goodness of fit measure is returned is controlled by argument `statistic`
-
-* `statistic = "explained` (default) gives the cumulative proportion of variance explained by each axis
-* `statistic = "distance"` gives the residual distance between the "fitted" location in constrained ordination space and the location in the full dimensional space
-
----
-
-# Diagnostics for constrained ordinations | goodness of fit
+Gives the cumulative proportion of variance explained by each axis
 
 ```{r goodness}
 head(goodness(mods))
-head(goodness(mods, summarize = TRUE))
 ```
 
 ---
 
-# Diagnostics for constrained ordinations | inertia decomposition
+# Diagnostics | inertia decomposition
 
 `inertcomp()` decomposes the variance in samples or species in partial, constrained, and unconstrained components
 
-Same two types of  measure available by argument `statistic`
-
- * `statistic = "explained` (default) gives the decomposition in terms of variance
- * `statistic = "distance"` gives decomposition in terms of the the residual distance
- * Can output as proportions of total via `proportion = TRUE`
+* `statistic = "explained` (default) gives the decomposition in terms of variance
+* `statistic = "distance"` gives decomposition in terms of the the residual distance
 
 ```{r inertcomp}
 head(inertcomp(mods, proportional = TRUE))
@@ -1220,11 +1361,9 @@ head(inertcomp(mods, proportional = TRUE))
 
 ---
 
-# Diagnostics for constrained ordinations | species-environment correlations
+# Diagnostics | species-environment correlations
 
-`spenvcor()` returns the species-environment correlation
-
-The (weighted) correlation between the weighted average-based and the linear combination-based sets of site scores
+`spenvcor()` returns the (weighted) correlation between the weighted average-based and the linear combination-based sets of site scores
 
 A *poor* measure of goodness of fit. Sensitive to
 
@@ -1239,20 +1378,20 @@ spenvcor(mods)
 
 ---
 
-# Diagnostics for constrained ordinations | interset correlations
+# Diagnostics | interset correlations
 
-`intersetcor()` returns the interset correlations; the (weighted) correlation between the weighted average-based site scores and each constraint variable
+`intersetcor()` returns the (weighted) correlation between the weighted average-based site scores and each constraint variable
 
 Another *poor* diagnostic
 
 * correlation based
 * focuses on a single constraint--axis combination at a time
 
-Vector fitting (`envfit()`) or biplot scores (`scores(model, display = "bp")`) are better alternatives
-
 ```{r intersetcor}
 intersetcor(mods)
 ```
+
+Vector fitting (`envfit()`) or biplot scores (`scores(model, display = "bp")`) are better alternatives
 
 ---
 

@@ -25,10 +25,20 @@ rda1
 eigenvals(cca1)
 
 
-## ----your-turn-fit-cca--------------------------------------------------------
+## ----your-turn-fit-cca-1------------------------------------------------------
 library("vegan")
 data(varechem, varespec)
-## ...your code here...
+
+
+## ----your-turn-fit-cca-2------------------------------------------------------
+mycca1 <- cca(varespec ~ N + P + K, data = varechem)
+mycca1
+
+
+## ----your-turn-fit-cca-3------------------------------------------------------
+ev <- eigenvals(mycca1, model = "constrained")
+head(ev)
+length(ev)
 
 
 ## ----scores-------------------------------------------------------------------
@@ -40,20 +50,38 @@ head(scores(cca1, choices = 1:2, display = "sites"))
 scores(cca1, choices = 1:2, display = "species", scaling = 3)
 
 
-## ----partial-ordination-------------------------------------------------------
+## ----your-turn-cca-4----------------------------------------------------------
+scrs <- scores(mycca1, display = "sites", choices = c(2,3),
+               scaling = "sites", hill = TRUE)
+head(scrs)
+
+
+## ----partial-ordination-1-----------------------------------------------------
 pcca <- cca(X = varespec,
             Y = varechem[, "Ca", drop = FALSE],
             Z = varechem[, "pH", drop = FALSE])
+
+
+## ----partial-ordination-2-----------------------------------------------------
 pcca <- cca(varespec ~ Ca + Condition(pH), data = varechem) ## easier!
 
 
-## ----triplot-1, fig.height = 5, crop.plot = TRUE, out.width = "0.5\\linewidth"----
+## ----partial-ordination-3-----------------------------------------------------
+pcca <- cca(varespec ~ Ca + Condition(pH), data = varechem) ## easier!
+pcca
+
+
+## ----triplot-1, fig.height = 6, fig.width = 6---------------------------------
 plot(cca1)
 
 
 ## ----cca-model-build1---------------------------------------------------------
 vare.cca <- cca(varespec ~ Al + P*(K + Baresoil), data = varechem)
 vare.cca
+
+
+## ----vif-cca1-----------------------------------------------------------------
+vif.cca(cca1)
 
 
 ## ----stepwise-1---------------------------------------------------------------
@@ -81,6 +109,28 @@ mods2
 mods2 <- step(upr, scope = list(lower = formula(lwr), upper = formula(upr)), trace = 0,
               test = "perm")
 mods2
+
+
+## ----rsq-cca1-----------------------------------------------------------------
+RsquareAdj(cca1)
+
+
+## ----stopping-rules-----------------------------------------------------------
+ordiR2step(lwr, upr, trace = FALSE)
+
+
+## ----permustats-1, results = "hide"-------------------------------------------
+pstat <- permustats(anova(cca1))
+summary(pstat)
+
+
+## ----permustats-1, echo = FALSE-----------------------------------------------
+pstat <- permustats(anova(cca1))
+summary(pstat)
+
+
+## ----permustats-2, fig.width = 6, fig.height = 6------------------------------
+densityplot(pstat)
 
 
 ## ----cca-anova----------------------------------------------------------------
@@ -122,18 +172,25 @@ set.seed(32)
 anova(m1)
 
 
-## ----meadows-cca-full-triplot, fig.height = 5, crop.plot = TRUE, out.width = "0.5\\linewidth"----
+## ----meadows-cca-full-triplot, fig.show = "hide"------------------------------
+plot(m1)
+
+
+## ----meadows-cca-full-triplot, fig.height = 6, fig.width = 6, echo = FALSE----
 plot(m1)
 
 
 ## ----meadows-cca-stepwise-----------------------------------------------------
 set.seed(67)
 lwr <- cca(spp ~ 1, data = env)
-m2 <- ordistep(lwr, scope = formula(m1), trace = FALSE)
-m2
+( m2 <- ordistep(lwr, scope = formula(m1), trace = FALSE) )
 
 
-## ----meadows-cca-reduced-triplot, fig.height = 5, crop.plot = TRUE, out.width = "0.5\\linewidth"----
+## ----meadows-cca-reduced-triplot, fig.show = "hide"---------------------------
+plot(m2)
+
+
+## ----meadows-cca-reduced-triplot, fig.height = 6, fig.width = 6, echo = FALSE----
 plot(m2)
 
 
@@ -145,10 +202,19 @@ m2$anova
 spph <- decostand(spp, method = "hellinger")
 m3 <- rda(spph ~ ., data = env)
 lwr <- rda(spph ~ 1, data = env)
-m4 <- ordistep(lwr, scope = formula(m3), trace = FALSE)
+m4 <- ordistep(lwr, scope = formula(m3),
+               trace = FALSE)
 
 
-## ----meadows-rda-reduced-triplot, fig.height = 5, crop.plot = TRUE, out.width = "0.5\\linewidth"----
+## ----meadows-rda-print--------------------------------------------------------
+m4
+
+
+## ----meadows-rda-reduced-triplot, fig.show = "hide"---------------------------
+plot(m4)
+
+
+## ----meadows-rda-reduced-triplot, fig.height = 6, fig.width = 6, echo = FALSE----
 plot(m4)
 
 
@@ -258,7 +324,16 @@ m.pca <- rda(crayfish)
 summary(eigenvals(m.pca))
 
 
-## ----crayfish-pca-plot, fig.width = 16, fig.height = 7.5, fig.show = "hold", crop.plot = TRUE----
+## ----crayfish-pca-plot, fig.show = "hide", collapse = TRUE--------------------
+layout(matrix(1:2, ncol = 2))
+biplot(m.pca, type = c("text", "points"), scaling = "species")
+set.seed(23)
+ev.pca <- envfit(m.pca ~ Watershed, data = design, scaling = "species")
+plot(ev.pca, labels = levels(design$Watershed), add = FALSE)
+layout(1)
+
+
+## ----crayfish-pca-plot, fig.show = "hold", out.width = "75%", echo = FALSE, fig.height = 5----
 layout(matrix(1:2, ncol = 2))
 biplot(m.pca, type = c("text", "points"), scaling = "species")
 set.seed(23)
@@ -275,6 +350,8 @@ m.ws
 ## ----crayfish-watershed-2-----------------------------------------------------
 summary(eigenvals(m.ws, constrained = TRUE))
 
+
+## ----crayfish-watershed-3-----------------------------------------------------
 set.seed(1)
 ctrl <- how(nperm = 499, within = Within(type = "none"),
             plots = with(design, Plots(strata = Stream, type = "free")))
@@ -288,6 +365,9 @@ m.str
 
 ## ----crayfish-stream-2--------------------------------------------------------
 summary(eigenvals(m.str, constrained = TRUE))
+
+
+## ----crayfish-stream-3--------------------------------------------------------
 set.seed(1)
 ctrl <- how(nperm = 499, within = Within(type = "none"),
             plots = with(design, Plots(strata = Reach, type = "free")),
@@ -320,7 +400,6 @@ ctrl <- how(nperm = 499, within = Within(type = "free"),
 
 ## ----goodness-----------------------------------------------------------------
 head(goodness(mods))
-head(goodness(mods, summarize = TRUE))
 
 
 ## ----inertcomp----------------------------------------------------------------

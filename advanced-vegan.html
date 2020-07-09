@@ -203,19 +203,69 @@ eigenvals(cca1)
 
 ---
 
-# Your turn
+# Example
 
 - Fit a CCA model to the lichen pasture data. The model should include, N, P, and K only.
 - Save the model in object `mycca1`
 - How much variance is explained by this model?
 - Extract the eigenvalues, how many constrained axes are there?
 
+---
+
 
 ```r
 library("vegan")
 data(varechem, varespec)
-## ...your code here...
 ```
+
+--
+
+
+```r
+mycca1 &lt;- cca(varespec ~ N + P + K, data = varechem)
+mycca1
+```
+
+```
+## Call: cca(formula = varespec ~ N + P + K, data = varechem)
+## 
+##               Inertia Proportion Rank
+## Total          2.0832     1.0000     
+## Constrained    0.4464     0.2143    3
+## Unconstrained  1.6368     0.7857   20
+## Inertia is scaled Chi-square 
+## 
+## Eigenvalues for constrained axes:
+##    CCA1    CCA2    CCA3 
+## 0.19309 0.16271 0.09060 
+## 
+## Eigenvalues for unconstrained axes:
+##    CA1    CA2    CA3    CA4    CA5    CA6    CA7    CA8 
+## 0.4495 0.2870 0.1877 0.1675 0.1280 0.1050 0.0750 0.0629 
+## (Showing 8 of 20 unconstrained eigenvalues)
+```
+
+---
+
+
+```r
+ev &lt;- eigenvals(mycca1, model = "constrained")
+head(ev)
+```
+
+```
+##       CCA1       CCA2       CCA3 
+## 0.19308594 0.16271109 0.09060228
+```
+
+```r
+length(ev)
+```
+
+```
+## [1] 3
+```
+
 
 ---
 
@@ -273,6 +323,10 @@ Can't display all of these and maintain relationships between the scores
 
 *Solution* scale one set of scores relative to the other via the `scaling` argument
 
+---
+
+# Scalings&amp;hellip;
+
 * `scaling = 1` &amp;mdash; Focus on sites, scale site scores by `\(\lambda_i\)`
 * `scaling = 2` &amp;mdash; Focus on species, scale species scores by `\(\lambda_i\)`
 * `scaling = 3` &amp;mdash; Symmetric scaling, scale both scores by `\(\sqrt{\lambda_i}\)`
@@ -305,9 +359,28 @@ Two modifiers select negative scores depending on whether the model is CCA or RD
 
 ---
 
-# Your turn
+# Example
 
-- Using the CCA model you fitted, extract the site scores for axes 2 and 3 with Hill's scaling
+- Using the CCA model you fitted, extract the site scores for axes 2 and 3 with Hill's scaling, focusing on the sites
+
+--
+
+
+```r
+scrs &lt;- scores(mycca1, display = "sites", choices = c(2,3),
+               scaling = "sites", hill = TRUE)
+head(scrs)
+```
+
+```
+##           CCA2        CCA3
+## 18  0.21507383 -0.22617222
+## 15 -0.53564592 -0.14736699
+## 24 -0.28328352 -0.56306912
+## 27 -0.79825273 -0.35205393
+## 23 -0.06029273 -0.09438971
+## 19  0.04742753  0.09586591
+```
 
 ---
 
@@ -317,43 +390,78 @@ Two modifiers select negative scores depending on whether the model is CCA or RD
 
 Argument `Z` is used for a data frame of variables to partial out
 
-Or with the formula interface use the `Condition()` function
-
 
 ```r
 pcca &lt;- cca(X = varespec,
             Y = varechem[, "Ca", drop = FALSE],
             Z = varechem[, "pH", drop = FALSE])
+```
+Or with the formula interface use the `Condition()` function
+
+
+```r
 pcca &lt;- cca(varespec ~ Ca + Condition(pH), data = varechem) ## easier!
+```
+
+---
+
+# Partial constrained ordinations
+
+
+```r
+pcca &lt;- cca(varespec ~ Ca + Condition(pH), data = varechem) ## easier!
+pcca
+```
+
+```
+## Call: cca(formula = varespec ~ Ca + Condition(pH), data = varechem)
+## 
+##               Inertia Proportion Rank
+## Total          2.0832     1.0000     
+## Conditional    0.1458     0.0700    1
+## Constrained    0.1827     0.0877    1
+## Unconstrained  1.7547     0.8423   21
+## Inertia is scaled Chi-square 
+## 
+## Eigenvalues for constrained axes:
+##    CCA1 
+## 0.18269 
+## 
+## Eigenvalues for unconstrained axes:
+##    CA1    CA2    CA3    CA4    CA5    CA6    CA7    CA8 
+## 0.3834 0.2749 0.2123 0.1760 0.1701 0.1161 0.1089 0.0880 
+## (Showing 8 of 21 unconstrained eigenvalues)
 ```
 
 ---
 
 # Triplots
 
-Triplots will generally produce a mess; we can really only display a couple of bits approximately anyway Trying to cram three things in is a recipe for a mess&amp;hellip; but we can do it
+.row[
+.col-6[
 
+Triplots will generally produce a mess; we can really only display a couple of bits approximately anyway Trying to cram three things in is a recipe for a mess&amp;hellip; but we can do it
+]
+.col-6[
 
 ```r
 plot(cca1)
 ```
 
-&lt;img src="advanced-vegan_files/figure-html/triplot-1-1.svg" width="0.5\linewidth" /&gt;
+![](advanced-vegan_files/figure-html/triplot-1-1.svg)&lt;!-- --&gt;
+]
+]
 
 ---
+class: inverse middle center subsection
 
-# Your turn
-
-- Using `mycca`, draw a triplot of axes 2 and 3 with sites scaling
-- Use the help file `?plot.cca` to help you work out how to do this
+# Model building
 
 ---
 
 # Building constrained ordination models
 
-If we don't want to think it's easy to fit a poor model with many constraints
-
-That's what I did with `cca1` and `rda1`
+If we don't want to think it's easy to fit a poor model with many constraints &amp;mdash; That's what I did with `cca1` and `rda1`
 
 Remember, CCA and RDA are *just regression methods* &amp;mdash; everything you know about regression applies here
 
@@ -397,22 +505,22 @@ vare.cca
 
 # Building constrained ordination models
 
-For CCA we have little choice but to do
+For CCA, RDA etc we have little choice but to do
 
  1. Fit well-chosen set of candidate models &amp; compare, or
  2. Fit a *full* model of well-chosen variables &amp; then do stepwise selection
 
-But automatic approaches to model building should be used cautiously!
+Automatic approaches to model building should be used cautiously!
 
-The standard `step()` function can be used as **vegan** provides two helper methods, `deviance()` and `extractAIC()`, used by `step()`
+The standard `step()` function can be used as *vegan* provides two helper methods, `deviance()` and `extractAIC()`, used by `step()`
 
-Vegan also provides methods for class `"cca"` for `add1()` and `drop1()`
+*vegan* also provides methods for class `"cca"` for `add1()` and `drop1()`
 
 ---
 
 # Variance inflation factors
 
-*Linear* dependencies between constraints can be investigated via the *variance inflation factor* or VIF
+*Linear* dependencies between constraints can be investigated with VIF
 
 VIF is a measure of how much the variance of `\(\hat{\beta}_j\)` is inflated by presence of other covariates
 
@@ -423,14 +531,26 @@ Lots of rules of thumb
 
 Computed via `vif.cca()`
 
+
+```r
+vif.cca(cca1)
+```
+
+```
+##         N         P         K        Ca        Mg         S        Al        Fe 
+##  1.981742  6.028515 12.009357  9.925801  9.810609 18.378794 21.192739  9.127762 
+##        Mn        Zn        Mo  Baresoil  Humdepth        pH 
+##  5.380432  7.739664  4.320346  2.253683  6.012537  7.389267
+```
+
 ---
 
 # Stepwise selection in CCA
 
-`step()` uses AIC which is a fudge for RDA/CCA. Alternatively use function `ordistep()`
+`step()` uses AIC which is a fudge for RDA/CCA &amp;mdash; use `ordistep()`
 
- 1. Define an upper and lower model scope, say the full model and the null model
- 2. To step from the lower scope or null model we use
+1. Define an upper and lower model scope, say the full model and the null model
+2. To step from the lower scope or null model we use
 
 
 ```r
@@ -493,6 +613,10 @@ mods$anova
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
+
+1. `Al` added first, then
+2. `P`, followed by
+3. `K`, then stopped
 
 ---
 
@@ -561,7 +685,19 @@ Can attempt to account for this bias via an *adjusted* `\(R^2\)` measure
 * `\(n\)` is number of samples `\(m\)` is number of constraints (model degrees of freedom)
 * Can be used up to `\(\sim M &gt; n/2\)` before becomes too conservative
 * Can be negative
-* Compute using `RsquareAdj()`
+
+
+```r
+RsquareAdj(cca1)
+```
+
+```
+## $r.squared
+## [1] 0.6919576
+## 
+## $adj.r.squared
+## [1] 0.2163163
+```
 
 ---
 
@@ -586,6 +722,34 @@ Blanchet *et al* (2008) proposed a two-step solution for models where `\(R^2_{ad
 Available in `ordiR2step()`
 
 ---
+
+# Stepwise selection via adjusted `\(R^2\)`
+
+
+```r
+ordiR2step(lwr, upr, trace = FALSE)
+```
+
+```
+## Call: cca(formula = varespec ~ Al + P + K, data = varechem)
+## 
+##               Inertia Proportion Rank
+## Total          2.0832     1.0000     
+## Constrained    0.6441     0.3092    3
+## Unconstrained  1.4391     0.6908   20
+## Inertia is scaled Chi-square 
+## 
+## Eigenvalues for constrained axes:
+##   CCA1   CCA2   CCA3 
+## 0.3616 0.1700 0.1126 
+## 
+## Eigenvalues for unconstrained axes:
+##    CA1    CA2    CA3    CA4    CA5    CA6    CA7    CA8 
+## 0.3500 0.2201 0.1851 0.1551 0.1351 0.1003 0.0773 0.0537 
+## (Showing 8 of 20 unconstrained eigenvalues)
+```
+
+---
 class: inverse middle center subsection
 
 # Permutation tests
@@ -608,8 +772,7 @@ What *is* shuffled and *how* is of **paramount** importance for the test to be v
 * With conditioning variables, two options are available, both of which *permute residuals* from model fits
     * The *full model* uses residuals from model `\(Y = X + Z + \varepsilon\)`
     * The *reduced model* uses residuals from model `\(Y = Z + \varepsilon\)`
-* In **vegan** which is used can be set via argument `model` with `"direct"`, ~~`"full"`~~, and `"reduced"` respectively
-* In current **vegan** option `method = "full"` is disabled
+* In **vegan** which is used can be set via argument `model` with `"direct"`, `"full"`, and `"reduced"` respectively
 
 ---
 
@@ -622,6 +785,50 @@ A test statistic is required, computed for observed model &amp; each permuted mo
 `$$F=\frac{\chi^2_{model} / df_{model}}{\chi^2_{resid} / df_{resid}}$$`
 
 Evaluate whether `\(F\)` is unusually large relative to the null (permutation) distribution of `\(F\)`
+
+---
+
+# Permutation tests in vegan
+
+.row[
+.col-6[
+
+```r
+pstat &lt;- permustats(anova(cca1))
+summary(pstat)
+```
+.small[
+
+```
+## 
+##       statistic    SES   mean lower median  upper Pr(perm)  
+## Model    1.4441 2.1270 1.0215       1.0033 1.3824    0.035 *
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Interval (Upper - Lower) = 0.95)
+```
+]
+]
+.col-6[
+
+```r
+densityplot(pstat)
+```
+
+![](advanced-vegan_files/figure-html/permustats-2-1.svg)&lt;!-- --&gt;
+]
+]
+
+???
+
+The summary method of permustats estimates the standardized effect sizes (SES) as the difference
+of observed statistic and mean of permutations divided by the standard deviation of permutations
+(also known as z-values). It also prints the the mean, median, and limits which contain interval
+percent of permuted values. With the default (interval = 0.95), for two-sided test these are (2.5%,
+97.5%) and for one-sided tests either 5% or 95% quantile and the p-value depending on the test
+direction. The mean, quantiles and z values are evaluated from permuted values without observed
+statistic, but the p-value is evaluated with the observed statistic. 
 
 ---
 
@@ -846,12 +1053,18 @@ anova(m1)
 
 # Spring meadow vegetation
 
+.row[
+.col-6[
 
 ```r
 plot(m1)
 ```
+]
+.col-6[
 
-&lt;img src="advanced-vegan_files/figure-html/meadows-cca-full-triplot-1.svg" width="0.5\linewidth" /&gt;
+![](advanced-vegan_files/figure-html/meadows-cca-full-triplot-1.svg)&lt;!-- --&gt;
+]
+]
 
 ---
 
@@ -861,11 +1074,7 @@ plot(m1)
 ```r
 set.seed(67)
 lwr &lt;- cca(spp ~ 1, data = env)
-m2 &lt;- ordistep(lwr, scope = formula(m1), trace = FALSE)
-```
-
-```r
-m2
+( m2 &lt;- ordistep(lwr, scope = formula(m1), trace = FALSE) )
 ```
 
 ```
@@ -892,12 +1101,18 @@ m2
 
 # Spring meadow vegetation
 
+.row[
+.col-6[
 
 ```r
 plot(m2)
 ```
+]
+.col-6[
 
-&lt;img src="advanced-vegan_files/figure-html/meadows-cca-reduced-triplot-1.svg" width="0.5\linewidth" /&gt;
+![](advanced-vegan_files/figure-html/meadows-cca-reduced-triplot-1.svg)&lt;!-- --&gt;
+]
+]
 
 ---
 
@@ -927,24 +1142,62 @@ m2$anova
 
 Alternative is RDA with a transformation
 
+.row[
+.col-6[
 
 ```r
 spph &lt;- decostand(spp, method = "hellinger")
 m3 &lt;- rda(spph ~ ., data = env)
 lwr &lt;- rda(spph ~ 1, data = env)
-m4 &lt;- ordistep(lwr, scope = formula(m3), trace = FALSE)
+m4 &lt;- ordistep(lwr, scope = formula(m3),
+               trace = FALSE)
+```
+]
+.col-6[
+.small[
+
+```r
+m4
 ```
 
+```
+## Call: rda(formula = spph ~ Ca + NH3 + conduct + Si + Corg + NO3 + pH +
+## Mg, data = env)
+## 
+##               Inertia Proportion Rank
+## Total          0.6123     1.0000     
+## Constrained    0.1823     0.2977    8
+## Unconstrained  0.4300     0.7023   61
+## Inertia is variance 
+## 
+## Eigenvalues for constrained axes:
+##    RDA1    RDA2    RDA3    RDA4    RDA5    RDA6    RDA7    RDA8 
+## 0.10572 0.02148 0.01224 0.01148 0.00945 0.00891 0.00696 0.00609 
+## 
+## Eigenvalues for unconstrained axes:
+##     PC1     PC2     PC3     PC4     PC5     PC6     PC7     PC8 
+## 0.04311 0.03026 0.02030 0.01767 0.01649 0.01519 0.01383 0.01346 
+## (Showing 8 of 61 unconstrained eigenvalues)
+```
+]
+]
+]
 ---
 
 # Spring meadow vegetation
 
+.row[
+.col-6[
 
 ```r
 plot(m4)
 ```
+]
+.col-6[
 
-&lt;img src="advanced-vegan_files/figure-html/meadows-rda-reduced-triplot-1.svg" width="0.5\linewidth" /&gt;
+![](advanced-vegan_files/figure-html/meadows-rda-reduced-triplot-1.svg)&lt;!-- --&gt;
+]
+]
 
 ---
 
@@ -999,21 +1252,21 @@ Trick is to shuffle the data whilst preserving that dependence
 
 # Restricted permutations
 
-Canoco has had restricted permutations for a *long* time. **vegan** has only recently caught up &amp; we're not (quite) there yet
+Canoco has had restricted permutations for a *long* time. *vegan* has only recently caught up &amp; we're not (quite) there yet
 
-**vegan** used to only know how to completely randomise data or completely randomise within blocks (via `strata` in **vegan**)
+*vegan* used to only know how to completely randomise data or completely randomise within blocks (via `strata` in *vegan*)
 
-The **permute** package grew out of initial code in the **vegan** repository to generate the sorts of restricted permutations available in Canoco
+The **permute** package grew out of initial code in the *vegan* repository to generate the sorts of restricted permutations available in Canoco
 
-We have now fully integrated **permute** into **vegan**&amp;hellip;
+We have now fully integrated **permute** into *vegan*&amp;hellip;
 
-**vegan** depends on **permute** so it will already be installed &amp; loaded when using **vegan**
+*vegan* depends on *permute* so it will already be installed &amp; loaded when using *vegan*
 
 ---
 
 # Restricted permutations with permute
 
-**permute** follows Canoco closely &amp;mdash; at the chiding of Cajo ter Braak when it didn't do what he wanted!
+*permute* follows *Canoco* closely &amp;mdash; at the (friendly!) chiding of Cajo ter Braak when it didn't do what he wanted!
 
 Samples can be thought of as belonging to three levels of a hierarchy
 
@@ -1037,7 +1290,7 @@ Plots or samples within plots, or both can be permuted following one of four sim
 4. Permutation of plots (groups of samples)
 5. Fixed (no permutation)
 
-Multiple plots per block, multiple samples per plot; plots could be arranged in a spatial grid and samples within each of the plots form a time series
+Multiple plots per block, multiple samples per plot; plots could be arranged in a spatial grid &amp; samples within plots form time series
 
 ---
 
@@ -1129,7 +1382,7 @@ Split-plot designs are hierarchical with two levels of units
 1. **whole-plots** , which contain
 2. **split-plots** (the samples)
 
-Can permute one or both of these but whole-plots must be of equal size
+Permute one or both, but whole-plots must be of equal size
 
 Essentially allows more than one error stratum to be analyzed
 
@@ -1141,7 +1394,7 @@ Test effect of constraints that vary *within* whole-plots by permuting the split
 
 # Whole-plots &amp; split-plots II
 
-Whole-plots or split-plots can be time series, linear transects or rectangular grids in which case the appropriate restricted permutation is used
+Whole-plots or split-plots, or both, can be time series, linear transects or rectangular grids in which case the appropriate restricted permutation is used
 
 If the split-plots are parallel time series &amp; `time` is an autocorrelated error component affecting all series then the same cyclic shift can be applied to each time series (within each whole-plot) (`constant = TRUE`)
 
@@ -1169,9 +1422,9 @@ Using `mirror = TRUE` then can double (time series, linear transects) or quadrup
 
 ---
 
-# Sets of permutations
+# Sets of permutations &amp;mdash; no free lunch
 
-Using restricted permutations can severely reduce the size of the set of allowed permutations
+Restricted severely reduce the size of the set of permutations
 
 As the minimum *p* value obtainable is `\(1 / np\)` where `\(np\)` is number of allowed permutations (including the observed) this can impact the ability to detect signal/pattern
 
@@ -1181,7 +1434,13 @@ If we don't want mirroring
 * in a time series of 100 samples the minimum *p* is 1/100 (0.01)
 * in a data set with 10 time series each of 20 observations (200 total), if we assume an autocorrelated error component over all series (`constant = TRUE`) then there are only 20 permutations of the data and minimum *p* is 0.05
 
+---
+
+# Sets of permutations &amp;mdash; no free lunch
+
 When the set of permutations is small it is better to switch to an exact test &amp; evaluate all permutations in the set rather than randomly sample from the set
+
+Use `complete = TRUE` in the call to `how()` &amp;mdash; perhaps also increase `maxperm`
 
 ---
 
@@ -1467,7 +1726,7 @@ names(design) &lt;- c("Watershed", "Stream", "Reach", "Run",
 
 ---
 
-# Hierarchical analysis of crayfish &amp;mdash; Unconstrained
+# Crayfish &amp;mdash; Unconstrained
 
 A number of samples have 0 crayfish, which excludes unimodal methods
 
@@ -1491,7 +1750,7 @@ summary(eigenvals(m.pca))
 
 ---
 
-# Hierarchical analysis of crayfish &amp;mdash; Unconstrained
+# Crayfish &amp;mdash; Unconstrained
 
 
 ```r
@@ -1502,12 +1761,13 @@ ev.pca &lt;- envfit(m.pca ~ Watershed, data = design, scaling = "species")
 plot(ev.pca, labels = levels(design$Watershed), add = FALSE)
 layout(1)
 ```
-
-![](advanced-vegan_files/figure-html/crayfish-pca-plot-1.svg)&lt;!-- --&gt;
+.center[
+&lt;img src="advanced-vegan_files/figure-html/crayfish-pca-plot-1.svg" width="75%" /&gt;
+]
 
 ---
 
-# Hierarchical analysis of crayfish &amp;mdash; Watershed scale
+# Crayfish &amp;mdash; Watershed scale
 
 
 ```r
@@ -1535,7 +1795,7 @@ m.ws
 
 ---
 
-# Hierarchical analysis of crayfish &amp;mdash; Watershed scale
+# Crayfish &amp;mdash; Watershed scale
 
 
 ```r
@@ -1549,6 +1809,11 @@ summary(eigenvals(m.ws, constrained = TRUE))
 ## Proportion Explained  0.3968 0.3135 0.2072 0.0602 0.02159 0.0007239
 ## Cumulative Proportion 0.3968 0.7103 0.9175 0.9777 0.99928 1.0000000
 ```
+
+---
+
+# Crayfish &amp;mdash; Watershed scale
+
 
 ```r
 set.seed(1)
@@ -1573,7 +1838,7 @@ ctrl &lt;- how(nperm = 499, within = Within(type = "none"),
 
 ---
 
-# Hierarchical analysis of crayfish &amp;mdash; Stream scale
+# Crayfish &amp;mdash; Stream scale
 
 
 ```r
@@ -1604,7 +1869,7 @@ m.str
 
 ---
 
-# Hierarchical analysis of crayfish &amp;mdash; Stream scale
+# Crayfish &amp;mdash; Stream scale
 
 
 ```r
@@ -1622,6 +1887,11 @@ summary(eigenvals(m.str, constrained = TRUE))
 ## Proportion Explained  0.002651 0.002521 0.0001347
 ## Cumulative Proportion 0.997344 0.999865 1.0000000
 ```
+
+---
+
+# Crayfish &amp;mdash; Stream scale
+
 
 ```r
 set.seed(1)
@@ -1648,7 +1918,7 @@ ctrl &lt;- how(nperm = 499, within = Within(type = "none"),
 
 ---
 
-# Hierarchical analysis of crayfish &amp;mdash; Reach scale
+# Crayfish &amp;mdash; Reach scale
 
 
 ```r
@@ -1678,7 +1948,7 @@ ctrl &lt;- how(nperm = 499, within = Within(type = "none"),
 
 ---
 
-# Hierarchical analysis of crayfish &amp;mdash; Reach scale
+# Crayfish &amp;mdash; Reach scale
 
 
 ```r
@@ -1706,7 +1976,7 @@ ctrl &lt;- how(nperm = 499, within = Within(type = "none"),
 
 ---
 
-# Hierarchical analysis of crayfish &amp;mdash; Run scale
+# Crayfish &amp;mdash; Run scale
 
 
 ```r
@@ -1735,7 +2005,7 @@ ctrl &lt;- how(nperm = 499, within = Within(type = "none"),
 
 ---
 
-# Hierarchical analysis of crayfish &amp;mdash; Run scale
+# Crayfish &amp;mdash; Run scale
 
 
 ```r
@@ -1778,18 +2048,11 @@ class: inverse middle center big-subsection
 
 ---
 
-# Diagnostics for constrained ordinations | goodness of fit
+# Diagnostics | goodness of fit
 
-`goodness()` computes two goodness of fit statistics for species or sites
+`goodness()` computes a goodness of fit statistic for species or sites, controlled by argument `display`
 
-Which goodness of fit measure is returned is controlled by argument `statistic`
-
-* `statistic = "explained` (default) gives the cumulative proportion of variance explained by each axis
-* `statistic = "distance"` gives the residual distance between the "fitted" location in constrained ordination space and the location in the full dimensional space
-
----
-
-# Diagnostics for constrained ordinations | goodness of fit
+Gives the cumulative proportion of variance explained by each axis
 
 
 ```r
@@ -1806,31 +2069,14 @@ head(goodness(mods))
 ## Pinusylv 0.0009244423 0.004802076 0.0060096
 ```
 
-```r
-head(goodness(mods, summarize = TRUE))
-```
-
-```
-##                  CCA1        CCA2      CCA3
-## Callvulg 0.0062471656 0.318907619 0.8254657
-## Empenigr 0.1164701677 0.137604904 0.1953245
-## Rhodtome 0.0999089739 0.169697909 0.1824153
-## Vaccmyrt 0.2361482843 0.240516323 0.2406730
-## Vaccviti 0.1523704591 0.156502301 0.2110550
-## Pinusylv 0.0009244423 0.004802076 0.0060096
-```
-
 ---
 
-# Diagnostics for constrained ordinations | inertia decomposition
+# Diagnostics | inertia decomposition
 
 `inertcomp()` decomposes the variance in samples or species in partial, constrained, and unconstrained components
 
-Same two types of  measure available by argument `statistic`
-
- * `statistic = "explained` (default) gives the decomposition in terms of variance
- * `statistic = "distance"` gives decomposition in terms of the the residual distance
- * Can output as proportions of total via `proportion = TRUE`
+* `statistic = "explained` (default) gives the decomposition in terms of variance
+* `statistic = "distance"` gives decomposition in terms of the the residual distance
 
 
 ```r
@@ -1849,11 +2095,9 @@ head(inertcomp(mods, proportional = TRUE))
 
 ---
 
-# Diagnostics for constrained ordinations | species-environment correlations
+# Diagnostics | species-environment correlations
 
-`spenvcor()` returns the species-environment correlation
-
-The (weighted) correlation between the weighted average-based and the linear combination-based sets of site scores
+`spenvcor()` returns the (weighted) correlation between the weighted average-based and the linear combination-based sets of site scores
 
 A *poor* measure of goodness of fit. Sensitive to
 
@@ -1874,16 +2118,14 @@ spenvcor(mods)
 
 ---
 
-# Diagnostics for constrained ordinations | interset correlations
+# Diagnostics | interset correlations
 
-`intersetcor()` returns the interset correlations; the (weighted) correlation between the weighted average-based site scores and each constraint variable
+`intersetcor()` returns the (weighted) correlation between the weighted average-based site scores and each constraint variable
 
 Another *poor* diagnostic
 
 * correlation based
 * focuses on a single constraint--axis combination at a time
-
-Vector fitting (`envfit()`) or biplot scores (`scores(model, display = "bp")`) are better alternatives
 
 
 ```r
@@ -1896,6 +2138,8 @@ intersetcor(mods)
 ## P  -0.3588931 -0.6109601 0.4478786
 ## K  -0.3767902 -0.1339051 0.7759566
 ```
+
+Vector fitting (`envfit()`) or biplot scores (`scores(model, display = "bp")`) are better alternatives
 
 ---
 

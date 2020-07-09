@@ -92,6 +92,10 @@ b, strong {
     font-size: 13px;
 }
 
+.not-so-small .remark-code-line {
+    font-size: 14px;
+}
+
 .remark-code {
     font-size: 16px;
 }
@@ -126,6 +130,10 @@ b, strong {
 
 .small {
     font-size: 0.75em;
+}
+
+.not-so-small {
+    font-size: 0.9em;
 }
 
 .smaller {
